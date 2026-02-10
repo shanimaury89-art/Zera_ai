@@ -1,38 +1,51 @@
 import os
-import threading
 from kivy.app import App
 from kivy.uix.image import Image
+from kivy.uix.floatlayout import FloatLayout
 from kivy.clock import Clock
 
-# Android special features ke liye jnius use hota hai
+# Android features (jnius) ko safely handle karne ke liye
 try:
     from jnius import autoclass
     PythonActivity = autoclass('org.kivy.android.PythonActivity')
     Context = autoclass('android.content.Context')
-except:
+except Exception as e:
     PythonActivity = None
     Context = None
+    print(f"Not running on Android or jnius missing: {e}")
 
 class ZeraApp(App):
     def build(self):
-        # Aapki glowing ring image yahan load hogi
-        # Size aur position center mein rakhi hai
-        self.img = Image(
-            source='1770689044948.jpg', 
-            size_hint=(0.7, 0.7), 
-            pos_hint={'center_x': 0.5, 'center_y': 0.5}
-        )
-        return self.img
+        # Background layout
+        self.layout = FloatLayout()
+        
+        # Image name (Vahi jo aapne upload ki hai)
+        img_name = '1770689044948.jpg'
+        
+        # Check if image exists before loading
+        if os.path.exists(img_name):
+            self.img = Image(
+                source=img_name,
+                size_hint=(0.8, 0.8),
+                pos_hint={'center_x': 0.5, 'center_y': 0.5}
+            )
+        else:
+            # Agar image nahi mili toh placeholder show karega
+            self.img = Image(
+                pos_hint={'center_x': 0.5, 'center_y': 0.5}
+            )
+            print("Warning: Image file not found in repository!")
+
+        self.layout.add_widget(self.img)
+        return self.layout
 
     def on_start(self):
-        # App start hote hi agar kuch check karna ho
-        print("Zera AI is starting...")
+        print("Zera AI has started successfully!")
 
     def set_flashlight(self, state):
-        """Android Flashlight control karne ke liye function"""
+        """Android Flashlight control (Experimental)"""
         if not PythonActivity:
             return
-            
         try:
             activity = PythonActivity.mActivity
             cameraManager = activity.getSystemService(Context.CAMERA_SERVICE)
@@ -40,32 +53,6 @@ class ZeraApp(App):
             cameraManager.setTorchMode(cameraId, state)
         except Exception as e:
             print(f"Flashlight error: {e}")
-
-    def launch_app_by_name(self, app_name):
-        """Android apps open karne ke liye function"""
-        if not PythonActivity:
-            return
-            
-        try:
-            activity = PythonActivity.mActivity
-            pm = activity.getPackageManager()
-            main_intent = autoclass('android.content.Intent')(autoclass('android.content.Intent').ACTION_MAIN)
-            main_intent.addCategory(autoclass('android.content.Intent').CATEGORY_LAUNCHER)
-            
-            apps = pm.queryIntentActivities(main_intent, 0)
-            
-            for i in range(apps.size()):
-                info = apps.get(i)
-                label = str(info.loadLabel(pm)).lower()
-                
-                if app_name.lower() in label:
-                    package_name = info.activityInfo.packageName
-                    launch_intent = pm.getLaunchIntentForPackage(package_name)
-                    if launch_intent:
-                        activity.startActivity(launch_intent)
-                        return
-        except Exception as e:
-            print(f"App launch error: {e}")
 
 if __name__ == '__main__':
     ZeraApp().run()
