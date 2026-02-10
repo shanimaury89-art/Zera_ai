@@ -1,5 +1,6 @@
 import os
 import logging
+import threading
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
@@ -8,73 +9,80 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
 
-# Logging setup for debugging
+# Android Logger Setup
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("ZeraAI")
 
 class ZeraApp(App):
     def build(self):
-        # Main Layout
+        # Setting up the Main UI Container
         self.root_layout = FloatLayout()
         
-        # Background color (Dark theme)
+        # Adding a professional dark background
         with self.root_layout.canvas.before:
-            Color(0.05, 0.05, 0.05, 1) # Dark Grey
-            self.rect = Rectangle(size=Window.size, pos=(0, 0))
-        Window.bind(size=self._update_rect)
+            Color(0.02, 0.02, 0.05, 1) # Deep Night Blue
+            self.bg_rect = Rectangle(size=Window.size, pos=(0, 0))
+        Window.bind(size=self._update_background)
 
-        # Status Label
-        self.status_label = Label(
-            text="Zera AI: Ready",
-            font_size='18sp',
-            color=(0, 1, 1, 1),  # Cyan color
+        # AI Status Display
+        self.status = Label(
+            text="[ ZERA SYSTEM ONLINE ]",
+            font_size='20sp',
+            bold=True,
+            color=(0, 0.8, 1, 1), # Electric Blue
             size_hint=(1, 0.1),
-            pos_hint={'center_x': 0.5, 'y': 0.1}
+            pos_hint={'center_x': 0.5, 'y': 0.15}
         )
 
-        # Main Glowing Ring Image
-        img_path = '1770689044948.jpg'
-        if os.path.exists(img_path):
-            self.main_img = Image(
-                source=img_path,
-                size_hint=(0.8, 0.8),
-                pos_hint={'center_x': 0.5, 'center_y': 0.5},
+        # Loading the Assistant Core Image (The Ring)
+        img_file = '1770689044948.jpg'
+        if os.path.exists(img_file):
+            self.core_display = Image(
+                source=img_file,
+                size_hint=(0.85, 0.85),
+                pos_hint={'center_x': 0.5, 'center_y': 0.55},
                 allow_stretch=True
             )
-            logger.info("Image loaded successfully.")
+            logger.info("Zera Core Visuals Loaded.")
         else:
-            self.main_img = Label(text="[ Image Missing ]", color=(1,0,0,1))
-            logger.error("Image file NOT found in directory.")
+            self.core_display = Label(text="Visual Core Missing", color=(1,0,0,1))
+            logger.error(f"Critical: {img_file} not found in repository.")
 
-        # Adding widgets to layout
-        self.root_layout.add_widget(self.main_img)
-        self.root_layout.add_widget(self.status_label)
+        # App Info Label
+        self.info = Label(
+            text="AI Version 1.0.0 | Developer Mode",
+            font_size='12sp',
+            color=(0.5, 0.5, 0.5, 1),
+            size_hint=(1, 0.05),
+            pos_hint={'center_x': 0.5, 'y': 0.02}
+        )
 
-        # Start a simple animation timer
-        Clock.schedule_interval(self.animate_ui, 1.0 / 30.0)
-        
+        # Adding all components to the screen
+        self.root_layout.add_widget(self.core_display)
+        self.root_layout.add_widget(self.status)
+        self.root_layout.add_widget(self.info)
+
         return self.root_layout
 
-    def _update_rect(self, instance, value):
-        self.rect.pos = (0, 0)
-        self.rect.size = value
-
-    def animate_ui(self, dt):
-        # Yahan hum future mein pulse animation dalenge
-        pass
+    def _update_background(self, instance, value):
+        self.bg_rect.size = value
+        self.bg_rect.pos = (0, 0)
 
     def on_start(self):
-        logger.info("App Started Successfully")
-        self.status_label.text = "Zera AI: Online"
+        # Triggering the startup sequence
+        logger.info("Initializing Zera AI Framework...")
+        Clock.schedule_once(self.complete_boot, 2)
+
+    def complete_boot(self, dt):
+        self.status.text = "ZERA: Listening for commands..."
+        self.status.color = (0, 1, 0.5, 1) # Neon Green
 
     def on_pause(self):
+        # Essential for Android apps to not crash in background
         return True
-
-    def on_resume(self):
-        pass
 
 if __name__ == '__main__':
     try:
         ZeraApp().run()
     except Exception as e:
-        logger.error(f"Fatal Error: {str(e)}")
+        logger.critical(f"App Startup Failed: {e}")
